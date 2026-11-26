@@ -29,7 +29,8 @@ function App(){
  async function editRecord(table,record,cols){if(!verifyOwnerKey('edit'))return;const changes={};for(const key of cols){const value=prompt(`Edit ${key.replaceAll('_',' ')}:`,record[key]??'');if(value===null)return;changes[key]=['stock','purchase_price','selling_price','low_stock_at','amount','commission','quantity','unit_cost','total','opening_balance','points_balance'].includes(key)&&value.trim()!==''?Number(value):value}const{error}=await sb.from(table).update(changes).eq('id',record.id);if(error)notify(error.message);else{notify('Record updated');await load()}}
  async function restoreItem(id){const{error}=await sb.rpc('restore_recycle_item',{id});if(error)notify(error.message);else{notify('Record restored');await load()}}
  async function remove(table,id){
-  if(!verifyOwnerKey('delete'))return;\n  const record=(rows[table]||[]).find(x=>x.id===id);
+  if(!verifyOwnerKey('delete'))return;
+  const record=(rows[table]||[]).find(x=>x.id===id);
   if(!record)return;
   if(table==='customers'){
    const outstanding=rows.bills
