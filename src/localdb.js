@@ -4,9 +4,9 @@ export const DB_NAME = 'rr-mobiles-offline-v12';
 export const TABLES = [
   'customers','products','bills','repairs','purchases','expenses',
   'credit_payments','loyalty_transactions','service_transactions',
-  'accounts','account_transactions'
+  'accounts','account_transactions','recycle_bin'
 ];
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let dbPromise;
 function db(){
   if(!dbPromise) dbPromise=new Promise((resolve,reject)=>{
@@ -33,7 +33,7 @@ class Query{
  async then(resolve,reject){try{let records=await all(this.table);records=records.filter(row=>this.filters.every(filter=>filter(row)));let data=null;
   if(this.action==='insert'){data=[];for(const row of this.payload)data.push(await put(this.table,row));}
   else if(this.action==='update'){data=[];for(const row of records){const next={...row,...this.payload,updated_at:new Date().toISOString()};await put(this.table,next);data.push(next);}}
-  else if(this.action==='delete'){for(const row of records)await del(this.table,row.id);data=records;}
+  else if(this.action==='delete'){data=[];for(const row of records){if(this.table==='recycle_bin'){await del(this.table,row.id);data.push(row);continue;}await put('recycle_bin',{original_table:this.table,original_record:row,deleted_at:new Date().toISOString()});await del(this.table,row.id);data.push(row);}}
   else {if(this.sort){const {key,ascending}=this.sort;records.sort((a,b)=>{const result=String(a[key]??'').localeCompare(String(b[key]??''),undefined,{numeric:true});return ascending?result:-result;});}data=records.slice(0,this.max);}
   resolve({data,error:null});
  }catch(error){resolve({data:null,error:{message:error?.message||String(error)}});}}
